@@ -5,6 +5,7 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const LM_STUDIO_URL = process.env.LM_STUDIO_URL || 'http://localhost:1234';
 
 // Middleware
 app.use(cors());
@@ -37,7 +38,7 @@ app.get('/api/models', (req, res) => {
 // Check if model server is available
 app.get('/api/check-server', async (req, res) => {
     try {
-        await axios.get('http://10.20.65.205:1234/v1/health-check');
+        await axios.get(`${LM_STUDIO_URL}/v1/health-check`);
         res.json({ status: 'connected' });
     } catch (error) {
         res.status(503).json({ 
@@ -50,7 +51,7 @@ app.get('/api/check-server', async (req, res) => {
 // Fetch available models from LM Studio server only when requested
 app.post('/api/check-models', async (req, res) => {
     try {
-        const response = await axios.get('http://10.20.65.205:1234/v1/models');
+        const response = await axios.get(`${LM_STUDIO_URL}/v1/models`);
         const modelList = response.data.data.map(model => ({
             id: model.id,
             created: model.created ? new Date(model.created * 1000).toLocaleString() : null,
@@ -95,7 +96,7 @@ app.post('/api/chat', async (req, res) => {
         activeRequests.set(sessionId, abortController);
 
         // Call AI API with abort signal and timeout
-        const response = await axios.post('http://10.20.65.205:1234/v1/chat/completions', {
+        const response = await axios.post(`${LM_STUDIO_URL}/v1/chat/completions`, {
             model: MODELS[model],
             messages: conversation,
             max_tokens: 200,
